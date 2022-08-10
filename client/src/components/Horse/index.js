@@ -1,0 +1,1 @@
+export { Horse } from "./Horse";
