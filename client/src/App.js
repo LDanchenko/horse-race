@@ -1,17 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setRaceData, setError } from "./redux/";
-import horse from "./horse.png"; // with import
+import { Horse } from "./components/Horse";
 import { io } from "socket.io-client";
-import "./App.css";
+import style from "./App.module.css";
+
 const socket = io("http://localhost:3002");
 
 function App() {
   const dispatch = useDispatch();
-  const stat = useSelector((state) => state);
+  const race = useSelector((state) => state.race);
+  const [isConnected, setIsConnected] = useState(socket.connected);
+  const vw = (window.innerWidth - 100) / 1000;
   useEffect(() => {
-    let counter = 0;
-
     socket.on("connect_error", (error) => {
       if (error) {
         socket.disconnect();
@@ -22,31 +23,34 @@ function App() {
     });
     socket.emit("start");
     socket.on("ticker", (data) => {
-      console.log(data);
-      counter += 1;
-      if (counter === 10) {
+      console.log(data.map((el) => el.distance));
+
+      if (data.find((el) => el.distance === 1000)) {
+        dispatch(setRaceData({ data }));
         socket.disconnect();
         return;
       }
-      console.log(counter);
       dispatch(setRaceData({ data }));
+      setIsConnected(true);
     });
 
     return () => {
       socket.disconnect();
+      setIsConnected(false);
     };
   }, []);
-  console.log(stat);
 
   return (
-    <div className="App">
-      <br />
-      {/* <img src={horse} width="100px"></img>
-      <hr align="center" width="100%vw" size="2" color="#ff0000" />
-      <br />
-      <hr align="left" width="100%vw" size="4" color="#ff9900" />
-      <br />
-      <hr align="right" width="100%vw" size="3" color="#0000dd" /> */}
+    <div className={style.App}>
+      {isConnected && (
+        <ul className={style.list}>
+          {race.map((race) => (
+            <li className={style.item} key={race.name}>
+              <Horse left={race.distance} c={vw} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
