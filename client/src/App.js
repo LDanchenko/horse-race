@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setRaceData, setError } from "./redux/";
+import { setRaceData, setError, getError, getRaceData } from "./redux/";
 import { Horse } from "./components/Horse";
 import { io } from "socket.io-client";
 import style from "./App.module.css";
@@ -9,9 +9,10 @@ const socket = io("http://localhost:3002");
 
 function App() {
   const dispatch = useDispatch();
-  const race = useSelector((state) => state.race);
+  const race = useSelector(getRaceData);
+  const error = useSelector(getError);
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const vw = (window.innerWidth - 100) / 1000;
+  const percent = (window.innerWidth - 100) / 1000;
   useEffect(() => {
     socket.on("connect_error", (error) => {
       if (error) {
@@ -23,8 +24,6 @@ function App() {
     });
     socket.emit("start");
     socket.on("ticker", (data) => {
-      console.log(data.map((el) => el.distance));
-
       if (data.find((el) => el.distance === 1000)) {
         dispatch(setRaceData({ data }));
         socket.disconnect();
@@ -42,11 +41,12 @@ function App() {
 
   return (
     <div className={style.App}>
+      {error && <h1>Server is not responding</h1>}
       {isConnected && (
         <ul className={style.list}>
           {race.map((race) => (
             <li className={style.item} key={race.name}>
-              <Horse left={race.distance} c={vw} />
+              <Horse distance={race.distance} percent={percent} />
             </li>
           ))}
         </ul>
