@@ -29,6 +29,7 @@ function App() {
         socket.disconnect();
         return;
       }
+
       dispatch(setRaceData({ data }));
       setIsConnected(true);
     });
